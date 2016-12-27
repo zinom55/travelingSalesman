@@ -2,7 +2,7 @@
 #	Implemented algorithms for "solving" the TS problem:	#
 #		1. Random connection (random(x, y))		#
 #		2. Brute force methode (brute(x, y))		#
-#		3. Simmulated annealing (sm(x, y, T, alpha))	#
+#		3. Simmulated annealing (sm(x, y, T, alpha, N, option_save="no"))	#
 #################################################################
 
 library(combinat); #To generate all possible connections "combinat" is needed.
@@ -79,7 +79,7 @@ brute <- function(x, y) {
 
 
 #Simulated annealing methode to approximate global minimum of the TS problem.
-sm <- function(x, y, temperature, alpha, N) {
+sm <- function(x, y, temperature, alpha, N, option_save = "no", option_PlotTemp = "no", option_mod = 500) {
 	n <- length(x);
 	
 	iter <- 0; #counter of iteration
@@ -87,7 +87,8 @@ sm <- function(x, y, temperature, alpha, N) {
 	dis_vec <- NULL; #vector for saving every single calculated distance
 	idx_s <- sample(n); #starting value (random connection)
 	dis_s <- calc_distance(x, y, idx_s); #distance of starting value
-	
+	count_pic <- 1;
+		
 	#set current values to starting values
 	idx_c <- idx_s;  
 	dis_c <- dis_s;
@@ -123,7 +124,7 @@ sm <- function(x, y, temperature, alpha, N) {
 			}
 			dis_t <- calc_distance(x, y, idx_t); #calculate trail distance
 			#Every 500th iteration the distance will be saved, to visiualize the process in the end.
-			if((count %% 500) == 0) {
+			if((count %% option_mod) == 0) {
 				dis_vec <- c(dis_vec, dis_t);
 			}
 			accept <- FALSE;
@@ -133,8 +134,16 @@ sm <- function(x, y, temperature, alpha, N) {
 			if(accept) {
 				idx_c <- idx_t;
 				dis_c <- dis_t;
+				#If option_save is chosen, a picture of every accepted connection is saved. 
+				if(option_save == "yes") {
+					jpeg(file=paste("pictures/", count_pic,".jpg", sep=""));
+					plot_ts(x, y, idx_c, n, xlim = c(0,1000), ylim = c(0,1000), main=paste(temperature));
+					dev.off();
+					count_pic <- count_pic + 1;
+				}
 			}
-			iter <- iter+1; #iteration counter
+			iter <- iter+1; #iteration counter	
+		
 		}
 		#The temperature will be lowered every iteration. Different choices how to lower are possible.  
 		temperature <- alpha*temperature; 
@@ -150,8 +159,10 @@ sm <- function(x, y, temperature, alpha, N) {
 	cleandev();
 	par(mfcol = c(1,2));
 	plot_ts(x, y, idx_c, n, xlim = c(0,1000), ylim = c(0,1000));
-	plot(x=seq(1:length(dis_vec))*500, y=dis_vec, xlab="k / Iterations", ylab="d", type="l");
-	for(i in 1:length(iter_vec)) {
-		abline(v = iter_vec[i]);
+	plot(x=seq(1:length(dis_vec))*option_mod, y=dis_vec, xlab="k / Iterations", ylab="d", type="l");
+	if(option_PlotTemp == "yes") {
+		for(i in 1:length(iter_vec)) {
+			abline(v = iter_vec[i]);
+		}
 	}
 }
