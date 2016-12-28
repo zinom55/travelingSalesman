@@ -1,12 +1,19 @@
-#################################################################
-#	Implemented algorithms for "solving" the TS problem:	#
-#		1. Random connection (random(x, y))		#
-#		2. Brute force methode (brute(x, y))		#
-#		3. Simmulated annealing (sm(x, y, T, alpha, N, option_save="no"))	#
-#################################################################
+#################################################################################################################################################
+#	Implemented algorithms for "solving" the TS problem:											#
+#		1. Random connection (random(x, y))												#
+#		2. Brute force methode (brute(x, y))												#
+#		3. Simulated annealing (sm(x, y, T, alpha, N, t_end = 10e-4, option_save="no",option_PlotTemp = "no", option_mod = 500))	#
+#################################################################################################################################################
 
 library(combinat); #To generate all possible connections "combinat" is needed.
 library(scatterplot3d); #Plotting 3D
+
+cat("Implemented algorithms for solving the TS problem:\n");
+cat("	1. Random connection (random(x, y))\n
+	2. Brute force methode (brute(x, y))\n	
+	3. Simulated annealing (sm(x, y, T, alpha, N, t_end = 10e-4, option_save = no,option_PlotTemp = no, option_mod = 500))\n\n"
+);
+
 
 # clean up open devices
 cleandev <- function(d) {
@@ -78,13 +85,47 @@ brute <- function(x, y) {
 }
 
 
+#Function for switch the positions of two cities and reverse the direction in between.
+new_connection <-function(i, idx_c, n) {
+	idx_t <- rep(0, n); #allocate vector for trail connection
+	if(i < n) {
+		i <- i + 1;
+	}
+	else i <- 1;
+	j <- i;
+	while(j == i) {
+		j <- ceiling(runif(1, 0, n));
+	}
+	j_max <- max(c(i,j));
+	i_min <- min(c(i,j));
+	if((i-1) >= 1) {
+		for(k in 1:(i-1)) {
+			idx_t[k] <- idx_c[k];
+		}
+	}
+	for(k in 0:(j_max-i_min)) {
+		idx_t[i_min+k] <- idx_c[j_max-k];
+	}
+	if(n >= (j_max+1)) {
+		for(k in (j_max+1):n) {
+			idx_t[k] <- idx_c[k];
+		}
+	}
+	return(c(i, idx_t));
+}
+
 #Simulated annealing methode to approximate global minimum of the TS problem.
-sm <- function(x, y, temperature, alpha, N, option_save = "no", option_PlotTemp = "no", option_mod = 500) {
+sm <- function(x, y, temperature, alpha, N, t_end = 10e-4, option_save = "no", option_PlotTemp = "no", option_mod = 500) {
 	n <- length(x);
 	
 	iter <- 0; #counter of iteration
 	iter_vec <- NULL; #vector for saving the iteration when temperature is switched
-	dis_vec <- NULL; #vector for saving every single calculated distance
+	dis_vec <- NULL; #vector for saving the last 1000 calculated distances
+	dis_vec_i <- NULL; #vector for saving distance against iteration
+	dis_vec_t <- NULL; #vector for saving distance against temperature
+	C_vec_t <- NULL; #vector for saving specific_heat against temperature
+	t_vec <-NULL; #vector for saving the used temperatures
+	dis_r_vec <- NULL; #vector for saving the random walk if T=0 is chosen
 	idx_s <- sample(n); #starting value (random connection)
 	dis_s <- calc_distance(x, y, idx_s); #distance of starting value
 	count_pic <- 1;
@@ -92,40 +133,35 @@ sm <- function(x, y, temperature, alpha, N, option_save = "no", option_PlotTemp 
 	#set current values to starting values
 	idx_c <- idx_s;  
 	dis_c <- dis_s;
-	idx_t <- rep(0, n); #allocate vector for trail connection
+	#If temperature == 0 is chosen, the starting temperature will be calculated by T=10*max{DeltaH}
+	if(temperature == 0) {
+		idx_r <- idx_c;
+		dis_r_old <- dis_s;
+		i <- 0;
+		for(r in 1:10e3) {
+			temp <- new_connection(i, idx_r, n); 			
+			i <- temp[1];
+			idx_r <- temp[2:length(temp)];
+			dis_r <- calc_distance(x, y, idx_r); #calculate trail distance
+			dis_r_vec <- c(dis_r_vec, dis_r-dis_r_old);
+			dis_r_old <- dis_r;
+		}
+		temperature <- 10*max(dis_r_vec);	
+	}
 
 	#Exit condition is some low temperature.
-	while(temperature >= 1e-4) {
+	while(temperature >= t_end) {
+		cat("Temperature: ", temperature, "\n"); 
 		i <- 0; #counter of switching process
 		for(count in 1:N) {
-			#Next lines switch the positions of two cities and reverse the direction in between.
-			if(i < n) {
-				i <- i + 1;
-			}
-			else i <- 1;
-			j <- i;
-			while(j == i) {
-				j <- ceiling(runif(1, 0, n));
-			}
-			j_max <- max(c(i,j));
-			i_min <- min(c(i,j));
-			if((i-1) >= 1) {
-				for(k in 1:(i-1)) {
-					idx_t[k] <- idx_c[k];
-				}
-			}
-			for(k in 0:(j_max-i_min)) {
-				idx_t[i_min+k] <- idx_c[j_max-k];
-			}
-			if(n >= (j_max+1)) {
-				for(k in (j_max+1):n) {
-					idx_t[k] <- idx_c[k];
-				}
-			}
+			#Switch the positions of two cities and reverse the direction in between.
+			temp <- new_connection(i, idx_c, n); 			
+			i <- temp[1];
+			idx_t <- temp[2:length(temp)];
 			dis_t <- calc_distance(x, y, idx_t); #calculate trail distance
-			#Every 500th iteration the distance will be saved, to visiualize the process in the end.
+			#Every option_modth iteration the distance will be saved, to visiualize the process in the end.
 			if((count %% option_mod) == 0) {
-				dis_vec <- c(dis_vec, dis_t);
+				dis_vec_i <- c(dis_vec_i, dis_t);
 			}
 			accept <- FALSE;
 			if(dis_t < dis_c) accept <- TRUE; #accept if trail distance is better the the current one
@@ -135,9 +171,10 @@ sm <- function(x, y, temperature, alpha, N, option_save = "no", option_PlotTemp 
 				idx_c <- idx_t;
 				dis_c <- dis_t;
 				#If option_save is chosen, a picture of every accepted connection is saved. 
+				dis_vec <- c(dis_vec, dis_t);
 				if(option_save == "yes") {
 					jpeg(file=paste("pictures/", count_pic,".jpg", sep=""));
-					plot_ts(x, y, idx_c, n, xlim = c(0,1000), ylim = c(0,1000), main=paste(temperature));
+					plot_ts(x, y, idx_c, n, xlim = c(0,20000), ylim = c(0,20000), main=paste(temperature));
 					dev.off();
 					count_pic <- count_pic + 1;
 				}
@@ -145,11 +182,22 @@ sm <- function(x, y, temperature, alpha, N, option_save = "no", option_PlotTemp 
 			iter <- iter+1; #iteration counter	
 		
 		}
+		t_vec <- c(t_vec, temperature);
+		length_dis_vec <- length(dis_vec);
+		if(length_dis_vec != 0) {
+			dis_vec_t <- c(dis_vec_t, mean(dis_vec[ceiling(length_dis_vec/2):length_dis_vec]));
+			C_vec_t <- c(C_vec_t, var(dis_vec[ceiling(length_dis_vec/2):length_dis_vec])/temperature^2);
+		}
+		else {
+			dis_vec_t <- c(dis_vec_t, 0);
+			C_vec_t <- c(C_vec_t, 0);
+		}
+		cat("Nr. of accepted moves: ", length_dis_vec, "\n\n");
+		dis_vec <- NULL;
 		#The temperature will be lowered every iteration. Different choices how to lower are possible.  
 		temperature <- alpha*temperature; 
 		#temperature <- 1/log(k+1)*temperature;
 		iter_vec <- c(iter_vec, iter); #Number of iterations after which the temperature is lowered wil be saved for printing corresponding vertical lines in the plot.
-		cat("Temperature: ", temperature, "\n"); 
 	}
 	#Print calculated optimal choice.
 	cat("Iterations: ",iter,"\n");
@@ -157,9 +205,13 @@ sm <- function(x, y, temperature, alpha, N, option_save = "no", option_PlotTemp 
 	cat("City combination: ", idx_c,"\n");
 	#Plot
 	cleandev();
+	plot_ts(x, y, idx_c, n, xlim = c(0,20000), ylim = c(0,20000));
+	dev.new();
 	par(mfcol = c(1,2));
-	plot_ts(x, y, idx_c, n, xlim = c(0,1000), ylim = c(0,1000));
-	plot(x=seq(1:length(dis_vec))*option_mod, y=dis_vec, xlab="k / Iterations", ylab="d", type="l");
+	plot(x=t_vec, y=dis_vec_t, xlab="temperature", ylab="Delta d", type="l", log="x");
+	plot(x=t_vec, y=C_vec_t, xlab="temperature", ylab="C", type="l", log="x");
+	dev.new();
+	plot(x=seq(1:length(dis_vec_i))*option_mod, y=dis_vec_i, xlab="k / Iterations", ylab="d", type="l");
 	if(option_PlotTemp == "yes") {
 		for(i in 1:length(iter_vec)) {
 			abline(v = iter_vec[i]);
