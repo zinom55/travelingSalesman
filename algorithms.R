@@ -22,19 +22,36 @@ cleandev <- function(d) {
   } else for(i in 1:length(d)) dev.off(d[i])
 }
 
-#Function to calculate the distance of a given connection (idx (indices)) with city-coordinates x,y.
-calc_distance <- function(x, y, idx) {
+#Function to calculate the matrix, which contains the distances between every city (point).
+calc_distance_matrix <- function(x,y) {
+	N <- length(x);
+	M <- matrix(rep(0, N^2), ncol = N);
+	#Loop over upper triangle part of the matrix. 
+	for(i in 1:(N-1)) {
+		for(j in (i+1):N) {
+			city_1 <- c(x[i], y[i]); #coordiante of the i_th city as a vector		
+			city_2 <- c(x[j], y[j]); #coordiante of the j_th city as a vector		
+                	distance <- sqrt(sum((city_2 - city_1)^2)); #distance between them is the scalar product
+			#use the symmetry distance(i,j) = distance(j,i) to fill the matrix
+			M[i,j] <- distance; 
+			M[j,i] <- distance; 
+		}
+	}
+	return(M);
+}
+
+#Function to calculate the distance of a given connection (idx (indices)) with distance matrix 
+calc_distance <- function(M, idx) {
 	N <- length(idx); #number of cities
 	distance <- 0;
 	#going through the indices of the given connection (idx[i])
 	for(i in 1:(N-1)) {
-                city_1 <- c(x[idx[i]], y[idx[i]]); #coordiante of i_th city
-                city_2 <- c(x[idx[i+1]], y[idx[i+1]]); #coordinate of i+1_th city
-                distance <- distance + sqrt(sum((city_2 - city_1)^2)); #distance between them
+		distance <- distance + M[idx[i], idx[i+1]]; #getting the distance between the connections from the matrix M
         }
-	distance_2 <- sqrt((x[idx[N]]-x[idx[1]])^2 + (y[idx[N]]-y[idx[1]])^2); #calculate distance between the first and last point
-	return(distance + distance_2);
+	distance <- distance + M[idx[N], idx[1]]; #calculate distance between the first and last point
+	return(distance);
 }
+
 
 #Plot the connection of the cities (points) with lines in between.
 plot_ts <- function(x, y, idx, n, ...) {
@@ -50,10 +67,11 @@ plot_ts <- function(x, y, idx, n, ...) {
 #Random connection between the cities.
 random <- function(x, y) {
 	n <- length(x);
+	M <- calc_distance_matrix(x, y); #calcuate the matrix, containing the distances between all points
 	distance <- NULL;
 	idx <- sample(n); #Generate a random connection.
 	
-	distance <- calc_distance(x, y, idx); #Calculate the distance of the chose connection.
+	distance <- calc_distance(M, idx); #Calculate the distance of the chose connection.
 	
 	
 	#Plot and Print the calculated distance
@@ -65,13 +83,14 @@ random <- function(x, y) {
 #Brute force methode to calculate the connection with the smallest distance.
 brute <- function(x, y) {
 	n <- length(x);
+	M <- calc_distance_matrix(x, y); #calcuate the matrix, containing the distances between all points
         dis_vec <- NULL;
 	optional_conn <- permn(seq(1:n)); #Use permn from "combinat" to generate a list with all possible permuations.
 	
 	#Going through all possible connections and storing the	calculated distance in the vector dis_vec.
 	for(j in 1:length(optional_conn)) {
 		idx <- optional_conn[[j]];	
-		dis_vec <- c(dis_vec, calc_distance(x, y, idx));
+		dis_vec <- c(dis_vec, calc_distance(M, idx));
 	}
 	
 	#Getting minimal distance and the corresponding connection and print them.
@@ -117,6 +136,7 @@ new_connection <-function(i, idx_c, n) {
 #Simulated annealing methode to approximate global minimum of the TS problem.
 sm <- function(x, y, temperature, alpha, N, t_end = 10e-4, option_save = "no", option_PlotTemp = "no", option_mod = 500) {
 	n <- length(x);
+	M <- calc_distance_matrix(x, y); #calcuate the matrix, containing the distances between all points
 	
 	iter <- 0; #counter of iteration
 	iter_vec <- NULL; #vector for saving the iteration when temperature is switched
@@ -127,7 +147,7 @@ sm <- function(x, y, temperature, alpha, N, t_end = 10e-4, option_save = "no", o
 	t_vec <-NULL; #vector for saving the used temperatures
 	dis_r_vec <- NULL; #vector for saving the random walk if T=0 is chosen
 	idx_s <- sample(n); #starting value (random connection)
-	dis_s <- calc_distance(x, y, idx_s); #distance of starting value
+	dis_s <- calc_distance(M, idx_s); #distance of starting value
 	count_pic <- 1;
 		
 	#set current values to starting values
@@ -142,7 +162,7 @@ sm <- function(x, y, temperature, alpha, N, t_end = 10e-4, option_save = "no", o
 			temp <- new_connection(i, idx_r, n); 			
 			i <- temp[1];
 			idx_r <- temp[2:length(temp)];
-			dis_r <- calc_distance(x, y, idx_r); #calculate trail distance
+			dis_r <- calc_distance(M, idx_r); #calculate trail distance
 			dis_r_vec <- c(dis_r_vec, dis_r-dis_r_old);
 			dis_r_old <- dis_r;
 		}
@@ -158,7 +178,7 @@ sm <- function(x, y, temperature, alpha, N, t_end = 10e-4, option_save = "no", o
 			temp <- new_connection(i, idx_c, n); 			
 			i <- temp[1];
 			idx_t <- temp[2:length(temp)];
-			dis_t <- calc_distance(x, y, idx_t); #calculate trail distance
+			dis_t <- calc_distance(M, idx_t); #calculate trail distance
 			#Every option_modth iteration the distance will be saved, to visiualize the process in the end.
 			if((count %% option_mod) == 0) {
 				dis_vec_i <- c(dis_vec_i, dis_t);
