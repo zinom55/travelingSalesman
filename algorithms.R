@@ -3,6 +3,9 @@
 #		1. Random connection (random(x, y))												#
 #		2. Brute force methode (brute(x, y))												#
 #		3. Simulated annealing (sm(x, y, T, alpha, N, t_end = 10e-4, option_save="no",option_PlotTemp = "no", option_mod = 500))	#
+#		4. Simulated annealing with a time component 	(sm_time <- function(x, y, temperature, alpha, N, t_end = 10e-4, time = 0, 	#
+#								stretch_f = 1, area = array(0,dim=c(2,2)), option_save = "no", 			#
+#								option_PlotTemp = "no", option_mod = 500))					#
 #################################################################################################################################################
 
 library(combinat); #To generate all possible connections "combinat" is needed.
@@ -11,7 +14,8 @@ library(scatterplot3d); #Plotting 3D
 cat("Implemented algorithms for solving the TS problem:\n");
 cat("	1. Random connection (random(x, y))\n
 	2. Brute force methode (brute(x, y))\n	
-	3. Simulated annealing (sm(x, y, T, alpha, N, t_end = 10e-4, option_save = no,option_PlotTemp = no, option_mod = 500))\n\n"
+	3. Simulated annealing (sm(x, y, T, alpha, N, t_end = 10e-4, option_save = no,option_PlotTemp = no, option_mod = 500))\n
+	4. Simulated annealing with a time component (sm_time <- function(x, y, temperature, alpha, N, t_end = 10e-4, time = 0,	stretch_f = 1, area = array(0,dim=c(2,2)), option_save = no, option_PlotTemp = no, option_mod = 500))\n\n"
 );
 
 
@@ -40,7 +44,7 @@ calc_distance_matrix <- function(x,y) {
 	return(M);
 }
 
-#Function to calculate the distance of a given connection (idx (indices)) with distance matrix 
+#Function to calculate the distance of a given connection (idx (indices)) with distance matrix M
 calc_distance <- function(M, idx) {
 	N <- length(idx); #number of cities
 	distance <- 0;
@@ -49,6 +53,59 @@ calc_distance <- function(M, idx) {
 		distance <- distance + M[idx[i], idx[i+1]]; #getting the distance between the connections from the matrix M
         }
 	distance <- distance + M[idx[N], idx[1]]; #calculate distance between the first and last point
+	return(distance);
+}
+
+#Function to check if the connection between city1 and city2 lays in the defined area (2x2 array: area)
+inside_region <- function(city1, city2, area) {
+	if(city1[1] >= area[1,1] && city1[1] <= area[1,2]) {
+		if(city1[2] >= area[2,1] && city1[2] <= area[2,2]) {
+			if(city2[1] >= area[1,1] && city2[1] <= area[1,2]) {
+				if(city2[2] >= area[2,1] && city2[2] <= area[2,2]) {
+					p <- 1;
+				}
+				else p <- 0;
+			}
+			else p <- 0;
+		}
+		else p <- 0; 
+	}
+	else p <- 0;
+	return(p);
+}
+
+#Function to calculate the distance of a given connection (idx (indices)) with distance matrix M with respect to the time component 
+calc_distance_time <- function(x, y, idx, time, area, stretch_f) {
+	N <- length(idx); #number of cities
+	distance <- 0;
+	for(i in 1:(N-1)) {
+		city1 <- c(x[idx[i]], y[idx[i]]);
+		city2 <- c(x[idx[i+1]], y[idx[i+1]]);
+		if(inside_region(city1, city2, area)) {
+			if(distance >= time) {
+				distance <- distance + sqrt(sum((city2 - city1)^2))*stretch_f;
+			}
+			else {
+				distance <- distance + sqrt(sum((city2 - city1)^2));
+			}
+		}
+		else {
+			distance <- distance + sqrt(sum((city2 - city1)^2));
+		}
+	}
+	city1 <- c(x[idx[N]], y[idx[N]]);
+	city2 <- c(x[idx[1]], y[idx[1]]);
+	if(inside_region(city1, city2, area)) {
+		if(distance >= time) {
+			distance <- distance + sqrt(sum((city2 - city1)^2))*stretch_f;
+		}
+		else {
+			distance <- distance + sqrt(sum((city2 - city1)^2));
+		}
+	}
+	else {
+		distance <- distance + sqrt(sum((city2 - city1)^2));
+	}
 	return(distance);
 }
 
@@ -153,7 +210,7 @@ sm <- function(x, y, temperature, alpha, N, t_end = 10e-4, option_save = "no", o
 	#set current values to starting values
 	idx_c <- idx_s;  
 	dis_c <- dis_s;
-	#If temperature == 0 is chosen, the starting temperature will be calculated by T=10*max{DeltaH}
+	#If temperature == 0 is chosen, the starting temperature will be calculated by T=10*max{DeltaH}, with a random walk
 	if(temperature == 0) {
 		idx_r <- idx_c;
 		dis_r_old <- dis_s;
@@ -226,6 +283,117 @@ sm <- function(x, y, temperature, alpha, N, t_end = 10e-4, option_save = "no", o
 	#Plot
 	cleandev();
 	plot_ts(x, y, idx_c, n, xlim = c(0,20000), ylim = c(0,20000));
+	dev.new();
+	par(mfcol = c(1,2));
+	plot(x=t_vec, y=dis_vec_t, xlab="temperature", ylab="Delta d", type="l", log="x");
+	plot(x=t_vec, y=C_vec_t, xlab="temperature", ylab="C", type="l", log="x");
+	dev.new();
+	plot(x=seq(1:length(dis_vec_i))*option_mod, y=dis_vec_i, xlab="k / Iterations", ylab="d", type="l");
+	if(option_PlotTemp == "yes") {
+		for(i in 1:length(iter_vec)) {
+			abline(v = iter_vec[i]);
+		}
+	}
+}
+
+#Simulated annealing methode to approximate global minimum of the TS problem plus time.
+sm_time <- function(x, y, temperature, alpha, N, t_end = 10e-4, time = 0, stretch_f = 1, area = array(0,dim=c(2,2)), option_save = "no", option_PlotTemp = "no", option_mod = 500) {
+	n <- length(x);
+	solution <- 118293.52;
+	time <- time * solution / 24;
+
+	iter <- 0; #counter of iteration
+	iter_vec <- NULL; #vector for saving the iteration when temperature is switched
+	dis_vec <- NULL; #vector for saving the last 1000 calculated distances
+	dis_vec_i <- NULL; #vector for saving distance against iteration
+	dis_vec_t <- NULL; #vector for saving distance against temperature
+	C_vec_t <- NULL; #vector for saving specific_heat against temperature
+	t_vec <-NULL; #vector for saving the used temperatures
+	dis_r_vec <- NULL; #vector for saving the random walk if T=0 is chosen
+	idx_s <- sample(n); #starting value (random connection)
+	dis_s <- calc_distance_time(x, y, idx_s, time, area, stretch_f); #distance of starting value
+	count_pic <- 1;
+		
+	#set current values to starting values
+	idx_c <- idx_s;  
+	dis_c <- dis_s;
+	#If temperature == 0 is chosen, the starting temperature will be calculated by T=10*max{DeltaH}, with a random walk
+	if(temperature == 0) {
+		idx_r <- idx_c;
+		dis_r_old <- dis_s;
+		i <- 0;
+		for(r in 1:10e3) {
+			temp <- new_connection(i, idx_r, n); 			
+			i <- temp[1];
+			idx_r <- temp[2:length(temp)];
+			dis_r <- calc_distance_time(x, y, idx_r, time, area, stretch_f); #calculate trail distance
+			dis_r_vec <- c(dis_r_vec, dis_r-dis_r_old);
+			dis_r_old <- dis_r;
+		}
+		temperature <- 10*max(dis_r_vec);	
+	}
+
+	#Exit condition is some low temperature.
+	while(temperature >= t_end) {
+		cat("Temperature: ", temperature, "\n"); 
+		i <- 0; #counter of switching process
+		for(count in 1:N) {
+			#Switch the positions of two cities and reverse the direction in between.
+			temp <- new_connection(i, idx_c, n); 			
+			i <- temp[1];
+			idx_t <- temp[2:length(temp)];
+			dis_t <- calc_distance_time(x, y, idx_t, time, area, stretch_f); #calculate trail distance
+			#Every option_modth iteration the distance will be saved, to visiualize the process in the end.
+			if((count %% option_mod) == 0) {
+				dis_vec_i <- c(dis_vec_i, dis_t);
+			}
+			accept <- FALSE;
+			if(dis_t < dis_c) accept <- TRUE; #accept if trail distance is better the the current one
+			if(runif(1) < exp(-(dis_t - dis_c)/temperature)) accept <- TRUE; #if not, stil accept with some probability
+			#If accepted, the current connection choice with distance dis_c will set to the trail one.
+			if(accept) {
+				idx_c <- idx_t;
+				dis_c <- dis_t;
+				#If option_save is chosen, a picture of every accepted connection is saved. 
+				dis_vec <- c(dis_vec, dis_t);
+				if(option_save == "yes") {
+					jpeg(file=paste("pictures/", count_pic,".jpg", sep=""));
+					plot_ts(x, y, idx_c, n, xlim = c(0,20000), ylim = c(0,20000), main=paste(temperature));
+					dev.off();
+					count_pic <- count_pic + 1;
+				}
+			}
+			iter <- iter+1; #iteration counter	
+		
+		}
+		t_vec <- c(t_vec, temperature);
+		length_dis_vec <- length(dis_vec);
+		if(length_dis_vec != 0) {
+			dis_vec_t <- c(dis_vec_t, mean(dis_vec[ceiling(length_dis_vec/2):length_dis_vec]));
+			C_vec_t <- c(C_vec_t, var(dis_vec[ceiling(length_dis_vec/2):length_dis_vec])/temperature^2);
+		}
+		else {
+			dis_vec_t <- c(dis_vec_t, 0);
+			C_vec_t <- c(C_vec_t, 0);
+		}
+		cat("Nr. of accepted moves: ", length_dis_vec, "\n\n");
+		dis_vec <- NULL;
+		#The temperature will be lowered every iteration. Different choices how to lower are possible.  
+		temperature <- alpha*temperature; 
+		#temperature <- 1/log(k+1)*temperature;
+		iter_vec <- c(iter_vec, iter); #Number of iterations after which the temperature is lowered wil be saved for printing corresponding vertical lines in the plot.
+	}
+	#Print calculated optimal choice.
+	cat("Iterations: ",iter,"\n");
+	cat("Opt. distance: ", dis_c,"\n");
+	cat("City combination: ", idx_c,"\n");
+	#Plot
+	cleandev();
+	plot_ts(x, y, idx_c, n, xlim = c(0,20000), ylim = c(0,20000));
+	lines(x=c(area[1,1], area[1,2]), y=c(area[2,1], area[2,1]));
+	lines(x=c(area[1,1], area[1,2]), y=c(area[2,2], area[2,2]));
+	lines(x=c(area[1,1], area[1,1]), y=c(area[2,1], area[2,2]));
+	lines(x=c(area[1,2], area[1,2]), y=c(area[2,1], area[2,2]));
 	dev.new();
 	par(mfcol = c(1,2));
 	plot(x=t_vec, y=dis_vec_t, xlab="temperature", ylab="Delta d", type="l", log="x");
