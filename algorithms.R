@@ -119,6 +119,50 @@ plot_ts <- function(x, y, idx, n, ...) {
 	lines(x=c(x[idx[n]], x[idx[1]]), y=c(y[idx[n]], y[idx[1]]));
 }
 
+
+#Function for switch the positions of two cities and reverse the direction in between.
+new_connection <-function(i, idx_c, n) {
+	idx_t <- rep(0, n); #allocate vector for trail connection
+	if(i < n) {
+		i <- i + 1;
+	}
+	else i <- 1;
+	j <- i;
+	while(j == i) {
+		j <- ceiling(runif(1, 0, n));
+	}
+	j_max <- max(c(i,j));
+	i_min <- min(c(i,j));
+	if((i-1) >= 1) {
+		for(k in 1:(i-1)) {
+			idx_t[k] <- idx_c[k];
+		}
+	}
+	for(k in 0:(j_max-i_min)) {
+		idx_t[i_min+k] <- idx_c[j_max-k];
+	}
+	if(n >= (j_max+1)) {
+		for(k in (j_max+1):n) {
+			idx_t[k] <- idx_c[k];
+		}
+	}
+	return(c(i, idx_t));
+}
+
+#Function two define default areas 1, 2 or 3.
+define_area <- function(option) {
+	if(option == 1) {
+		area <- array(c(5000, 15000, 5000, 17000), dim = c(2,2));
+	}
+	else if(option == 2) {
+		area <- array(c(7500, 12500, 7500, 15000), dim = c(2,2));
+	}	
+	else if(option == 3) {
+		area <- array(c(0, 20000, 0, 20000), dim = c(2,2));
+
+	}
+}
+
 ####################################################################################################
 
 #Random connection between the cities.
@@ -158,36 +202,6 @@ brute <- function(x, y) {
 
 	#Plot 
 	plot_ts(x, y, optimal_conn, n, xlim = c(0,1000), ylim = c(0,1000));
-}
-
-
-#Function for switch the positions of two cities and reverse the direction in between.
-new_connection <-function(i, idx_c, n) {
-	idx_t <- rep(0, n); #allocate vector for trail connection
-	if(i < n) {
-		i <- i + 1;
-	}
-	else i <- 1;
-	j <- i;
-	while(j == i) {
-		j <- ceiling(runif(1, 0, n));
-	}
-	j_max <- max(c(i,j));
-	i_min <- min(c(i,j));
-	if((i-1) >= 1) {
-		for(k in 1:(i-1)) {
-			idx_t[k] <- idx_c[k];
-		}
-	}
-	for(k in 0:(j_max-i_min)) {
-		idx_t[i_min+k] <- idx_c[j_max-k];
-	}
-	if(n >= (j_max+1)) {
-		for(k in (j_max+1):n) {
-			idx_t[k] <- idx_c[k];
-		}
-	}
-	return(c(i, idx_t));
 }
 
 #Simulated annealing methode to approximate global minimum of the TS problem.
@@ -296,7 +310,7 @@ sm <- function(x, y, temperature, alpha, N, t_end = 10e-4, option_save = "no", o
 	}
 }
 
-#Simulated annealing methode to approximate global minimum of the TS problem plus time.
+#Simulated annealing methode to approximate global minimum of the TS problem plus time component. It will be assumed that the overall time is 24h and that after time "time" the distance to travel takes the factor "stretch_f" longer.
 sm_time <- function(x, y, temperature, alpha, N, t_end = 10e-4, time = 0, stretch_f = 1, area = array(0,dim=c(2,2)), option_save = "no", option_PlotTemp = "no", option_mod = 500) {
 	n <- length(x);
 	solution <- 118293.52;
