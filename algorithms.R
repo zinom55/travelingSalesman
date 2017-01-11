@@ -3,7 +3,7 @@
 #		1. Random connection (random(x, y))												#
 #		2. Brute force methode (brute(x, y))												#
 #		3. Simulated annealing (sa(x, y, T, alpha, N, t_end = 10e-4, option_save="no",option_PlotTemp = "no", option_mod = 500))	#
-#		4. Simulated annealing with a time component 	(sm_time <- function(x, y, temperature, alpha, N, t_end = 10e-4, time = 0, 	#
+#		4. Simulated annealing with a time component 	(sa_time <- function(x, y, temperature, alpha, N, t_end = 10e-4, time = 0, 	#
 #								stretch_f = 1, area = array(0,dim=c(2,2)), option_save = "no", 			#
 #								option_PlotTemp = "no", option_mod = 500))					#
 #################################################################################################################################################
@@ -16,7 +16,7 @@ cat("	1. Random connection (random(x, y))\n
 	2. Brute force methode (brute(x, y))\n	
 <<<<<<< HEAD
 	3. Simulated annealing (sa(x, y, T, alpha, N, t_end = 10e-4, option_save = no,option_PlotTemp = no, option_mod = 500))\n
-	4. Simulated annealing with a time component (sm_time <- function(x, y, temperature, alpha, N, t_end = 10e-4, time = 0,	stretch_f = 1, area = array(0,dim=c(2,2)), option_save = no, option_PlotTemp = no, option_mod = 500))\n\n"
+	4. Simulated annealing with a time component (sa_time <- function(x, y, temperature, alpha, N, t_end = 10e-4, time = 0,	stretch_f = 1, area = array(0,dim=c(2,2)), option_save = no, option_PlotTemp = no, option_mod = 500))\n\n"
 );
 
 
@@ -312,7 +312,7 @@ sa <- function(x, y, temperature, alpha, N, t_end = 10e-4, option_save = "no", o
 }
 
 #Simulated annealing methode to approximate global minimum of the TS problem plus time component. It will be assumed that the overall time is 24h and that after time "time" the distance to travel takes the factor "stretch_f" longer.
-sm_time <- function(x, y, temperature, alpha, N, t_end = 10e-4, time = 0, stretch_f = 1, area = array(0,dim=c(2,2)), option_save = "no", option_PlotTemp = "no", option_mod = 500) {
+sa_time <- function(x, y, temperature, alpha, N, t_end = 10e-4, time = 0, stretch_f = 1, area = array(0,dim=c(2,2)), option_save = "no", option_PlotTemp = "no", option_mod = 500) {
 	n <- length(x);
 	solution <- 118293.52;
 	time <- time * solution / 24;
