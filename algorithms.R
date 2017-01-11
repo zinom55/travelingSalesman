@@ -2,7 +2,7 @@
 #	Implemented algorithms for "solving" the TS problem:											#
 #		1. Random connection (random(x, y))												#
 #		2. Brute force methode (brute(x, y))												#
-#		3. Simulated annealing (sm(x, y, T, alpha, N, t_end = 10e-4, option_save="no",option_PlotTemp = "no", option_mod = 500))	#
+#		3. Simulated annealing (sa(x, y, T, alpha, N, t_end = 10e-4, option_save="no",option_PlotTemp = "no", option_mod = 500))	#
 #################################################################################################################################################
 
 library(combinat); #To generate all possible connections "combinat" is needed.
@@ -11,7 +11,7 @@ library(scatterplot3d); #Plotting 3D
 cat("Implemented algorithms for solving the TS problem:\n");
 cat("	1. Random connection (random(x, y))\n
 	2. Brute force methode (brute(x, y))\n	
-	3. Simulated annealing (sm(x, y, T, alpha, N, t_end = 10e-4, option_save = no,option_PlotTemp = no, option_mod = 500))\n\n"
+	3. Simulated annealing (sa(x, y, T, alpha, N, t_end = 10e-4, option_save = no,option_PlotTemp = no, option_mod = 500))\n\n"
 );
 
 
@@ -134,7 +134,7 @@ new_connection <-function(i, idx_c, n) {
 }
 
 #Simulated annealing methode to approximate global minimum of the TS problem.
-sm <- function(x, y, temperature, alpha, N, t_end = 10e-4, option_save = "no", option_PlotTemp = "no", option_mod = 500) {
+sa <- function(x, y, temperature, alpha, N, t_end = 10e-4, option_save = "no", option_PlotTemp = "no", option_mod = 500) {
 	n <- length(x);
 	M <- calc_distance_matrix(x, y); #calcuate the matrix, containing the distances between all points
 	
