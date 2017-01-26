@@ -8,16 +8,16 @@
 //#include "/home/nils/Downloads/mtwist-1.5/mtwist.h"
 
 //Read the data for TS-problem of the 127 Biergarten in Augsburg
-void read_data(int *x, int *y) {
-	FILE *f_biergarten = fopen("data/bier127.tsp", "r");
+void read_data(int *x, int *y, const char *file) {
+	FILE *f = fopen(file, "r");
 	unsigned int i = 0;
 	unsigned int number = 0;
-	if(f_biergarten == NULL) {printf("Error! File does not exist."); exit(-1);}
-	while(fscanf(f_biergarten, "%i %i %i",&number, &x[i], &y[i]) == 3) {
+	if(f == NULL) {printf("Error! File does not exist."); exit(-1);}
+	while(fscanf(f, "%i %i %i",&number, &x[i], &y[i]) == 3) {
 		//printf("\n%i \t %i", x[i], y[i]);
 		++i;
 	}
-	fclose(f_biergarten);
+	fclose(f);
 }
 
 double** allocate_matrix(unsigned int rows, unsigned int cols) {
@@ -36,7 +36,7 @@ void free_matrix(double **M, unsigned int rows) {
 }
 
 double** distance_matrix(int *x, int *y, unsigned int length_x) {
-	double** M = allocate_matrix(127, 127);
+	double** M = allocate_matrix(length_x, length_x);
 	int city_1[2] = {0};
 	int city_2[2] = {0};
 	double distance = 0;
@@ -130,13 +130,13 @@ double GetStartTemperature(unsigned int iterations, double **M, unsigned int len
 void SA(int *x, int *y, unsigned int length, double alpha, unsigned int iter, double t_end) {
 	time_t tstart;
 	time(&tstart);
-	FILE *f_result = fopen("data/bier_result.txt", "w");
-	FILE *f_result_conn = fopen("data/bier_result_conn.txt", "w");
-	FILE *f_result_data = fopen("data/bier_result_data.txt", "w");
-	double **M = distance_matrix(x, y, 127);
+	FILE *f_result = fopen("data/bier_result_40e6.txt", "w");
+	FILE *f_result_conn = fopen("data/bier_result_conn_40e6.txt", "w");
+	FILE *f_result_data = fopen("data/bier_result_data_40e6.txt", "w");
+	double **M = distance_matrix(x, y, length);
 	unsigned int *idx_c = (unsigned int*)malloc(length * sizeof(unsigned int));
 	unsigned int *idx_t = (unsigned int*)malloc(length * sizeof(unsigned int));
-	for(unsigned int i = 0; i < 127; ++i) {
+	for(unsigned int i = 0; i < length; ++i) {
 		idx_c[i] = i;
 	}
 	double dis_c = CalcDistance(M, length, idx_c);
@@ -150,7 +150,7 @@ void SA(int *x, int *y, unsigned int length, double alpha, unsigned int iter, do
 	double *mean_array = (double*)malloc(((int)(log(t_end/temperature)/(log(alpha)))) * sizeof(double));
 	unsigned int i = 0;
 	printf("Start Connection:\n");
-	for(unsigned int p = 0; p < 127; ++p) {
+	for(unsigned int p = 0; p < length; ++p) {
 		printf("%i ", idx_c[p]);
 	}
 	printf("\n\n");
@@ -170,7 +170,7 @@ void SA(int *x, int *y, unsigned int length, double alpha, unsigned int iter, do
 			//printf("\n");
 			accept = 0;	
 			if(dis_t < dis_c) accept = 1;
-			if(RandMtoN(0, 1) < exp(-(dis_t - dis_c)/temperature)) accept = 1;
+			else if(RandMtoN(0, 1) < exp(-(dis_t - dis_c)/temperature)) accept = 1;
 			if(accept) {
 				for(unsigned int l = 0; l < length; ++l) {
 					idx_c[l] = idx_t[l];
@@ -211,11 +211,12 @@ void SA(int *x, int *y, unsigned int length, double alpha, unsigned int iter, do
 	fprintf(f_result_data, "Iterations per Temperature = %i\n", iter);
 	time_t tend;
 	time(&tend);
-	fprintf(f_result_data, "Time = %lu\n", tend-tstart);
+	fprintf(f_result_data, "Time = %lus\n", tend-tstart);
 	
 
 	printf("Opt. Distance = %f\ns", dis_c);	
-	free_matrix(M, 127);
+	printf("Time = %lus\n", tend-tstart);
+	free_matrix(M, length);
 	fclose(f_result);
 }	
 
@@ -223,9 +224,9 @@ void SA(int *x, int *y, unsigned int length, double alpha, unsigned int iter, do
 int main() {
 	time_t t;
 	srand((unsigned) time(&t));
-	int x[127] = {0};	
-	int y[127] = {0};	
-	read_data(x, y);
+	int x[1000] = {0};	
+	int y[1000] = {0};	
+	read_data(x, y, "data/dsj1000.tsp");
 //	unsigned int count = 0;
 //	unsigned int *idx_c = (unsigned int*)malloc(127 * sizeof(unsigned int));
 //
@@ -246,6 +247,6 @@ int main() {
 //		printf("%i  ", idx_t[p]);
 //	}
 	//printf("\ni = %f", mt_ldrand());
-	SA(x,y,127,0.9,100e6,1);	
+	SA(x,y,1000,0.9,1e5,1);	
 	return(0);
 }
