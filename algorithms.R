@@ -18,7 +18,7 @@ cat("	1. Random connection (random(x, y))\n
 	4. Simulated annealing with a time component (sa_time <- function(x, y, temperature, alpha, N, t_end = 10e-4, time = 0,	stretch_f = 1, area = array(0,dim=c(2,2)), option_save = no, option_PlotTemp = no, option_mod = 500))\n\n"
 );
 
-data <- read.table("data/bier127.tsp", skip=6);
+data <- read.table("data/bier127.tsp");
 x <- data[,2];
 y <- data[,3];
 
@@ -172,12 +172,12 @@ define_area <- function(option) {
 	}
 }
 
-StartTemperature <- function(idx_c, dis_s, n, M) {
+StartTemperature <- function(idx_c, dis_s, n, M, N) {
 	dis_r_vec <- NULL; #vector for saving the random walk if T=0 is chosen
 	idx_r <- idx_c;
 	dis_r_old <- dis_s;
 	i <- 0;
-	for(r in 1:10e3) {
+	for(r in 1:N) {
 		temp <- new_connection(i, idx_r, n); 			
 		i <- temp[1];
 		idx_r <- temp[2:length(temp)];
@@ -233,12 +233,13 @@ brute <- function(x, y) {
 
 #Simulated annealing methode to approximate global minimum of the TS problem.
 sa <- function(x, y, temperature, alpha, N, t_end = 10e-4, option_save = "no", option_PlotTemp = "no", option_mod = 500) {
+	start_time <- proc.time();
 	n <- length(x);
 	M <- calc_distance_matrix(x, y); #calcuate the matrix, containing the distances between all points
 	
 	iter <- 0; #counter of iteration
 	iter_vec <- NULL; #vector for saving the iteration when temperature is switched
-	dis_vec <- NULL; #vector for saving the last 1000 calculated distances
+	dis_vec <- NULL;
 	dis_vec_i <- NULL; #vector for saving distance against iteration
 	dis_vec_t <- NULL; #vector for saving distance against temperature
 	C_vec_t <- NULL; #vector for saving specific_heat against temperature
@@ -252,7 +253,7 @@ sa <- function(x, y, temperature, alpha, N, t_end = 10e-4, option_save = "no", o
 	dis_c <- dis_s;
 	#If temperature == 0 is chosen, the starting temperature will be calculated by T=10*max{DeltaH}, with a random walk
 	if(temperature == 0) {
-		temperature = StartTemperature(idx_c, dis_s, n, M);	
+		temperature = StartTemperature(idx_c, dis_s, n, M, N);	
 	}
 
 	#Exit condition is some low temperature.
@@ -316,10 +317,12 @@ sa <- function(x, y, temperature, alpha, N, t_end = 10e-4, option_save = "no", o
 		#temperature <- 1/log(k+1)*temperature;
 		iter_vec <- c(iter_vec, iter); #Number of iterations after which the temperature is lowered wil be saved for printing corresponding vertical lines in the plot.
 	}
+	stop_time <- proc.time();
 	#Print calculated optimal choice.
 	cat("Iterations: ",iter,"\n");
 	cat("Opt. distance: ", dis_c,"\n");
 	cat("City combination: ", idx_c,"\n");
+	cat("Time: ", stop_time - start_time,"s\n");
 	#Plot
 	cleandev();
 	plot_ts(x, y, idx_c, n, xlim = c(0,20000), ylim = c(0,20000));
