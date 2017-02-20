@@ -144,7 +144,7 @@ void WriteInFiles(unsigned int count_pictures, unsigned int *idx, unsigned int l
 	}
 }
 
-double SA(int *x, int *y, unsigned int length, double alpha, unsigned int iter, double t_end, int modulus, bool save_pictures, bool save_data) {
+double SA(int *x, int *y, unsigned int length, double alpha, unsigned int iter, double t_end, double t_start, int modulus, bool save_pictures, bool save_data) {
 	time_t tstart;
 	time(&tstart);
 	FILE *f_result = NULL;
@@ -168,7 +168,10 @@ double SA(int *x, int *y, unsigned int length, double alpha, unsigned int iter, 
 	int count_accept = 0;
 	unsigned int count_pictures = 0, t_steps = 0;
 	double mean = 0, mean_sq = 0, C = 0;
-	double temperature = GetStartTemperature(iter, M, length, idx_c);
+	if(t_start == 0) {
+		double temperature = GetStartTemperature(iter, M, length, idx_c);
+	}
+	else temperature = t_start;
 	double temperature_start = temperature;
 	double *t_array = (double*)malloc(((int)(log(t_end/temperature)/(log(alpha))+1)) * sizeof(double));
 	double *C_array = (double*)malloc(((int)(log(t_end/temperature)/(log(alpha))+1)) * sizeof(double));
@@ -273,7 +276,7 @@ void GetTemperatureDependence(time_t t, int *x, int *y, double i_max, double i_m
 			FILE *f_temperature = fopen(f_temperature_name, "a");
 
 			srand((unsigned) time(&t));
-			distance[count] = SA(x,y,127,i,1e5,1,40e5,0,0);
+			distance[count] = SA(x,y,127,i,1e5,1,500000,40e5,0,0);
 			printf("Alpha: %f \t Distance: %f \n", i, distance[count]);
 			fprintf(f_temperature, "%f \t %f \n", i, distance[count]);
 			fclose(f_temperature);
