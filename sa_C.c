@@ -168,8 +168,9 @@ double SA(int *x, int *y, unsigned int length, double alpha, unsigned int iter, 
 	int count_accept = 0;
 	unsigned int count_pictures = 0, t_steps = 0;
 	double mean = 0, mean_sq = 0, C = 0;
+	double temperature = 0;
 	if(t_start == 0) {
-		double temperature = GetStartTemperature(iter, M, length, idx_c);
+		temperature = GetStartTemperature(iter, M, length, idx_c);
 	}
 	else temperature = t_start;
 	double temperature_start = temperature;
@@ -289,20 +290,23 @@ void GetTemperatureDependence(time_t t, int *x, int *y, double i_max, double i_m
 	}
 }
 
-/*void GetIterationDependence(time_t t, int *x, int *y, unsigned int iter_max, unsigned int iter_min, unsigned int step, unsigned int iter) {
+void GetIterationDependence(time_t t, int *x, int *y, unsigned int iter) {
 	unsigned int count = 0;
-	double *distance = (double*) malloc((int)(i_max-i_miin+1) * sizeof(double));
+	unsigned int step = 0;
+	unsigned int steps_array[9] = {1, 1e2, 1e3, 1e4, 1e5, 5e5, 1e6, 2e6, 4e6};
+	double *distance = (double*) malloc(9 * sizeof(double));
 	for(unsigned int k = 0; k < iter; ++k) {
 		printf("\nIteration: %i from %i\n", k+1, iter);
-		for(unsigned int i = iter_min; i <= i_max; i += step) {
+		for(unsigned int i = 0; i < 9; ++i) {
+			step = steps_array[i];
 			char f_N_name[50];
-			sprintf(f_N_name, "data/bier127_result/N_dependence/N_%i.txt", i);
+			sprintf(f_N_name, "data/bier127_result/N_dependence/N_%i.txt", step);
 			FILE *f_N = fopen(f_N_name, "a");
 
 			srand((unsigned) time(&t));
-			distance[count] = SA(x,y,127,0.9,i,1,40e5,0,0);
-			printf("N: %i \t Distance: %f \n", i, distance[count]);
-			fprintf(f_N, "%f \t %f \n", i, distance[count]);
+			distance[count] = SA(x,y,127,0.8,step,1,500000,40e5,0,0);
+			printf("N: %u \t Distance: %f \n", step, distance[count]);
+			fprintf(f_N, "%u \t %f \n", step, distance[count]);
 			fclose(f_N);
 			count++;
 		}
@@ -311,7 +315,7 @@ void GetTemperatureDependence(time_t t, int *x, int *y, double i_max, double i_m
 		}
 		count = 0;
 	}
-}*/
+}
 
 
 int main() {
@@ -320,6 +324,7 @@ int main() {
 	int x[127] = {0};	
 	int y[127] = {0};	
 	read_data(x, y, "data/bier127.tsp");
-	GetTemperatureDependence(t, x, y, 0.9, 0.2, 0.1, 2000);
+	//GetTemperatureDependence(t, x, y, 0.9, 0.2, 0.1, 2000);
+	GetIterationDependence(t, x, y, 2);
 	return(0);
 }
