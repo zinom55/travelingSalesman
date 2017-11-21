@@ -19,8 +19,8 @@ cat("	1. Random connection (random(x, y))\n
 );
 
 data <- read.table("data/bier127.tsp");
-x <- data[,2];
-y <- data[,3];
+#x <- data[,2];
+#y <- data[,3];
 
 # clean up open devices
 cleandev <- function(d) {
@@ -112,19 +112,29 @@ calc_distance_time <- function(x, y, idx, time, area, stretch_f) {
 	return(distance);
 }
 
+plot_ts_points <- function(x, y, ...) {
+        par(oma=c(0,0,0,0), mar=c(5,6,2,2), mgp=c(0,1.5,0));
+        plot(x, y, pch=19, ann=FALSE, cex.axis=2.5, cex=1.2, ...);
+        mtext(side = 1, text = "X / arb. unit", line = 4, cex=2.5);
+        mtext(side = 2, text = "Y / arb. unit", line = 4, cex = 2.5);
+	
+}
 
 #Plot the connection of the cities (points) with lines in between.
 plot_ts <- function(x, y, idx, n, ...) {
-	plot(x, y, pch=19, ...);
+	par(oma=c(0,0,0,0), mar=c(5,6,2,2), mgp=c(0,1.5,0));
+        plot(x, y, pch=19, ann=FALSE, cex.axis=2.5, cex=1.2, ...);
+        mtext(side = 1, text = "X / arb. unit", line = 4, cex=2.5);
+        mtext(side = 2, text = "Y / arb. unit", line = 4, cex = 2.5);
 	for(i in 1:(n-1)) {
 		if(i == 1) {
-			lines(x=c(x[idx[i]], x[idx[i+1]]), y=c(y[idx[i]], y[idx[i+1]]), col="red");
+			lines(x=c(x[idx[i]], x[idx[i+1]]), y=c(y[idx[i]], y[idx[i+1]]));
 		}
 		else {
 			lines(x=c(x[idx[i]], x[idx[i+1]]), y=c(y[idx[i]], y[idx[i+1]]));
 		}
 	}
-	lines(x=c(x[idx[n]], x[idx[1]]), y=c(y[idx[n]], y[idx[1]]), col="blue");
+	lines(x=c(x[idx[n]], x[idx[1]]), y=c(y[idx[n]], y[idx[1]]));
 	
 }
 
@@ -227,7 +237,7 @@ brute <- function(x, y) {
 	cat("City combination: ", optimal_conn, "\n");
 
 	#Plot 
-	plot_ts(x, y, optimal_conn, n, xlim = c(0,1000), ylim = c(0,1000));
+	plot_ts(x, y, optimal_conn, n, xlim = c(0,100), ylim = c(0,100));
 }
  
 

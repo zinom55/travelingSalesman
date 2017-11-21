@@ -148,12 +148,14 @@ double SA(int *x, int *y, unsigned int length, double alpha, unsigned int iter, 
 	time_t tstart;
 	time(&tstart);
 	FILE *f_result = NULL;
+	FILE *f_result_half = NULL;
 	FILE *f_result_conn = NULL;
 	FILE *f_result_data = NULL;
 	if(save_data == 1) {
-		f_result = fopen("data/bier127_result/bier127_result_40e6.txt", "w");
-		f_result_conn = fopen("data/bier127_result/bier127_result_conn_40e6.txt", "w");
-		f_result_data = fopen("data/bier127_result/bier127_result_data_40e6.txt", "w");
+		f_result = fopen("data/bier127_result/bier127_result_1e5.txt", "w");
+		f_result_half = fopen("data/bier127_result/bier127_result_half_1e5.txt", "w");
+		f_result_conn = fopen("data/bier127_result/bier127_result_conn_1e5.txt", "w");
+		f_result_data = fopen("data/bier127_result/bier127_result_data_1e5.txt", "w");
 	}
 	double **M = distance_matrix(x, y, length);
 	unsigned int *idx_c = (unsigned int*)malloc(length * sizeof(unsigned int));
@@ -165,9 +167,10 @@ double SA(int *x, int *y, unsigned int length, double alpha, unsigned int iter, 
 	double dis_c = CalcDistance(M, length, idx_c);
 	double dis_t = 0;
 	bool accept = 0;
-	int count_accept = 0;
+	int count_accept = 0, count_half = 0;
 	unsigned int count_pictures = 0, t_steps = 0;
 	double mean = 0, mean_sq = 0, C = 0;
+	double mean_half = 0, mean_sq_half = 0, C_half = 0;
 	double temperature = 0;
 	if(t_start == 0) {
 		temperature = GetStartTemperature(iter, M, length, idx_c);
@@ -176,7 +179,11 @@ double SA(int *x, int *y, unsigned int length, double alpha, unsigned int iter, 
 	double temperature_start = temperature;
 	double *t_array = (double*)malloc(((int)(log(t_end/temperature)/(log(alpha))+1)) * sizeof(double));
 	double *C_array = (double*)malloc(((int)(log(t_end/temperature)/(log(alpha))+1)) * sizeof(double));
+	double *C_half_array = (double*)malloc(((int)(log(t_end/temperature)/(log(alpha))+1)) * sizeof(double));
 	double *mean_array = (double*)malloc(((int)(log(t_end/temperature)/(log(alpha))+1)) * sizeof(double));
+	double *mean_half_array = (double*)malloc(((int)(log(t_end/temperature)/(log(alpha))+1)) * sizeof(double));
+	double *distance_array = (double*)malloc((int) iter * sizeof(double));
+	memset(distance_array,0,iter);
 	unsigned int i = 0;
 	printf("Start Connection:\n");
 	for(unsigned int p = 0; p < length; ++p) {
@@ -188,8 +195,11 @@ double SA(int *x, int *y, unsigned int length, double alpha, unsigned int iter, 
 		i = 0;
 		count_accept = 0;
 		mean = 0;
+		mean_half = 0;
 		mean_sq = 0;
+		mean_sq_half = 0;
 		C = 0;
+		C_half = 0;
 		for(unsigned count = 0; count < iter; ++count) {
 			i = GetConnection(i, idx_c, length, idx_t);
 			dis_t = CalcDistance(M, length, idx_t);
@@ -207,25 +217,48 @@ double SA(int *x, int *y, unsigned int length, double alpha, unsigned int iter, 
 				dis_c = dis_t;
 				mean += dis_t;
 				mean_sq += dis_t*dis_t;
+				if(iter < 1e6) {
+					distance_array[count_accept] = dis_t;
+				}
 				++count_accept;
 			}
 		}
 		if(count_accept != 0) {
+			if(iter < 1e6) {
+				count_half = 0;
+				for(i = 0; i < count_accept; ++i) {
+					if((count_accept-i) < count_accept/2) {
+						mean_half += distance_array[i]; 
+						mean_sq_half += pow(distance_array[i],2); 
+						++count_half;
+					}
+				}
+				mean_half = mean_half/count_half;
+				mean_sq_half = mean_sq_half/count_half;
+				C_half = (mean_sq_half - pow(mean_half, 2)) / pow(temperature, 2);
+				printf("%f\n",C_half);
+			}
 			mean = mean/count_accept;
 			mean_sq = mean_sq/count_accept;
 			C = (mean_sq - pow(mean, 2)) / pow(temperature, 2);
+			
 		}
 		else {
 			mean = 0;
 			C = 0;
+			mean_half = 0;
+			C_half = 0;
 		}
 		C_array[t_steps] = C;
+		C_half_array[t_steps] = C_half;
 		t_array[t_steps] = temperature;
 		printf("Accepted: %i \nDistance: %f\n", count_accept, dis_c);
 		printf("H: %f \nC: %f\n\n", mean, C);
 		mean_array[t_steps] = mean;
+		mean_half_array[t_steps] = mean_half;
 		temperature *= alpha;
 		++t_steps;
+		memset(distance_array,0,count_accept);
 	}
 	if(save_pictures == 1) {
 		WriteInFiles(count_pictures, idx_c, length, dis_c, temperature);
@@ -233,6 +266,9 @@ double SA(int *x, int *y, unsigned int length, double alpha, unsigned int iter, 
 	if(save_data == 1) {
 		for(unsigned t = 0; t < t_steps; t++) {
 			fprintf(f_result, "%f \t %f \t %f\n", t_array[t], mean_array[t], C_array[t]);
+			if(iter < 1e6) {
+				fprintf(f_result_half, "%f \t %f \t %f\n", t_array[t], mean_half_array[t], C_half_array[t]);
+			}
 		}
 	}
 	printf("\nOpt. Combination:\n");
@@ -256,7 +292,10 @@ double SA(int *x, int *y, unsigned int length, double alpha, unsigned int iter, 
 	printf("Time = %lus\n", tend-tstart);
 	free_matrix(M, length);
 	free(C_array);	
+	free(C_half_array);	
 	free(mean_array);	
+	free(mean_half_array);	
+	free(distance_array);	
 	free(t_array);
 	free(idx_c);
 	free(idx_t);
@@ -268,7 +307,7 @@ double SA(int *x, int *y, unsigned int length, double alpha, unsigned int iter, 
 
 void GetTemperatureDependence(time_t t, int *x, int *y, double i_max, double i_min, double step, unsigned int iter) {
 	unsigned int count = 0;
-	double *distance = (double*) malloc((int)(((i_max-i_min)/step)+1) * sizeof(double));
+	double *distance = (double*) malloc((int)(((i_max-i_min)/step)+2) * sizeof(double));
 	for(unsigned int k = 0; k < iter; ++k) {
 		printf("\nIteration: %i from %i\n", k+1, iter);
 		for(double i = i_max; i >= i_min; i -= step) {
@@ -277,7 +316,7 @@ void GetTemperatureDependence(time_t t, int *x, int *y, double i_max, double i_m
 			FILE *f_temperature = fopen(f_temperature_name, "a");
 
 			srand((unsigned) time(&t));
-			distance[count] = SA(x,y,127,i,1e5,1,500000,40e5,0,0);
+			distance[count] = SA(x,y,127,i,1e4,1,500000,40e5,0,0);
 			printf("Alpha: %f \t Distance: %f \n", i, distance[count]);
 			fprintf(f_temperature, "%f \t %f \n", i, distance[count]);
 			fclose(f_temperature);
@@ -290,24 +329,29 @@ void GetTemperatureDependence(time_t t, int *x, int *y, double i_max, double i_m
 	}
 }
 
-void GetIterationDependence(time_t t, int *x, int *y, unsigned int iter) {
+void GetIterationDependence(time_t t_new, int *x, int *y, unsigned int iter) {
 	unsigned int count = 0;
 	unsigned int step = 0;
-	unsigned int steps_array[9] = {1, 1e2, 1e3, 1e4, 1e5, 5e5, 1e6, 2e6, 4e6};
-	double *distance = (double*) malloc(9 * sizeof(double));
+	time_t t_old = 0;
+	//unsigned int steps_array[9] = {1, 1e2, 1e3, 1e4, 1e5, 5e5, 1e6, 2e6, 4e6};
+	unsigned int steps_array[1] = {3};
+	double *distance = (double*) malloc(1 * sizeof(double));
 	for(unsigned int k = 0; k < iter; ++k) {
 		printf("\nIteration: %i from %i\n", k+1, iter);
-		for(unsigned int i = 0; i < 9; ++i) {
+		for(unsigned int i = 0; i < 1; ++i) {
 			step = steps_array[i];
 			char f_N_name[50];
 			sprintf(f_N_name, "data/bier127_result/N_dependence/N_%i.txt", step);
-			FILE *f_N = fopen(f_N_name, "a");
-
-			srand((unsigned) time(&t));
+			FILE *f_N = fopen(f_N_name, "a");	
+			while(t_old == t_new) {
+				time(&t_new);
+			}
+			srand((unsigned) t_new);
 			distance[count] = SA(x,y,127,0.8,step,1,500000,40e5,0,0);
 			printf("N: %u \t Distance: %f \n", step, distance[count]);
 			fprintf(f_N, "%u \t %f \n", step, distance[count]);
 			fclose(f_N);
+			t_old = t_new;
 			count++;
 		}
 		for(unsigned int i = 0; i < count; ++i) {
@@ -317,6 +361,54 @@ void GetIterationDependence(time_t t, int *x, int *y, unsigned int iter) {
 	}
 }
 
+void GetTimeFromN(time_t t_new, int *x, int *y) {
+	unsigned int count = 0;
+	unsigned int step = 0;
+	time_t t_old = 0;
+	time_t t_end = 0;
+	unsigned int steps_array[15] = {1, 10, 25, 50, 75, 1e2, 300, 500, 1e3, 1e4, 1e5, 5e5, 1e6, 2e6, 4e6};
+	double *distance = (double*) malloc(15 * sizeof(double));
+	FILE *f_N = fopen("data/bier127_result/N_dependence/time.txt", "a");	
+	for(unsigned int i = 0; i < 15; ++i) {
+		step = steps_array[i];
+		while(t_old == t_new) {
+			time(&t_new);
+		}
+		srand((unsigned) t_new);
+		distance[count] = SA(x,y,127,0.8,step,1,500000,40e5,0,0);
+		time(&t_end);
+		printf("N: %u \t Time: %lu \n", step, t_end-t_new);
+		fprintf(f_N, "%u \t %lu \n", step, t_end-t_new);
+		t_old = t_new;
+		count++;
+	}
+	fclose(f_N);
+}
+
+void GetTimeFromAlpha(time_t t_new, int *x, int *y) {
+	unsigned int count = 0;
+	double alpha = 0;
+	time_t t_old = 0;
+	time_t t_end = 0;
+	double alpha_array[8] = {0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9};
+	double *distance = (double*) malloc(8 * sizeof(double));
+	FILE *f_N = fopen("data/bier127_result/t_dependence_all/time.txt", "a");	
+	for(unsigned int i = 0; i < 8; ++i) {
+		alpha = alpha_array[i];
+		while(t_old == t_new) {
+			time(&t_new);
+		}
+		srand((unsigned) t_new);
+		distance[count] = SA(x,y,127,alpha,1e4,1,500000,40e5,0,0);
+		time(&t_end);
+		printf("N: %f \t Time: %lu \n", alpha, t_end-t_new);
+		fprintf(f_N, "%f \t %lu \n", alpha, t_end-t_new);
+		t_old = t_new;
+		count++;
+	}
+	fclose(f_N);
+}
+
 
 int main() {
 	time_t t;
@@ -324,7 +416,10 @@ int main() {
 	int x[127] = {0};	
 	int y[127] = {0};	
 	read_data(x, y, "data/bier127.tsp");
-	//GetTemperatureDependence(t, x, y, 0.9, 0.2, 0.1, 2000);
-	GetIterationDependence(t, x, y, 2);
+	SA(x,y,127,0.8,1e5,1,0,40e5,0,1);
+	//GetTemperatureDependence(t, x, y, 0.9, 0.2, 0.1, 20000);
+	//GetIterationDependence(t, x, y, 464);
+	//GetTimeFromN(t, x, y);
+	//GetTimeFromAlpha(t, x, y);
 	return(0);
 }
