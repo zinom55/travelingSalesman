@@ -9,7 +9,7 @@ cat("	1. Random connection (random(x, y))\n
 );
 
 # Load data
-data <- read.table("data/bier127.tsp");
+data <- read.table("data/beer127.tsp");
 x <- data[,2]
 y <- data[,3]
 

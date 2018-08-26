@@ -129,7 +129,7 @@ double GetStartTemperature(unsigned int iterations, double **M, unsigned int len
 
 void WriteInFiles(unsigned int count_pictures, unsigned int *idx, unsigned int length, double distance, double temperature) {
 	char file_save_name[30];
-	sprintf(file_save_name, "data/bier127_result/c_txt/%i.txt", count_pictures);
+	sprintf(file_save_name, "data/beer127_result/c_txt/%i.txt", count_pictures);
 	printf("File: %s\n", file_save_name);
 	FILE *f_picture = fopen(file_save_name, "w");
 	fprintf(f_picture, "%f\n", temperature);
@@ -152,10 +152,10 @@ double SA(int *x, int *y, unsigned int length, double alpha, unsigned int iter, 
 	FILE *f_result_conn = NULL;
 	FILE *f_result_data = NULL;
 	if(save_data == 1) {
-		f_result = fopen("data/bier127_result/bier127_result_1e5.txt", "w");
-		f_result_half = fopen("data/bier127_result/bier127_result_half_1e5.txt", "w");
-		f_result_conn = fopen("data/bier127_result/bier127_result_conn_1e5.txt", "w");
-		f_result_data = fopen("data/bier127_result/bier127_result_data_1e5.txt", "w");
+		f_result = fopen("data/beer127_result/beer127_result_1e5.txt", "w");
+		f_result_half = fopen("data/beer127_result/beer127_result_half_1e5.txt", "w");
+		f_result_conn = fopen("data/beer127_result/beer127_result_conn_1e5.txt", "w");
+		f_result_data = fopen("data/beer127_result/beer127_result_data_1e5.txt", "w");
 	}
 	double **M = distance_matrix(x, y, length);
 	unsigned int *idx_c = (unsigned int*)malloc(length * sizeof(unsigned int));
@@ -312,7 +312,7 @@ void GetTemperatureDependence(time_t t, int *x, int *y, double i_max, double i_m
 		printf("\nIteration: %i from %i\n", k+1, iter);
 		for(double i = i_max; i >= i_min; i -= step) {
 			char f_temperature_name[50];
-			sprintf(f_temperature_name, "data/bier127_result/t_dependence/alpha_%f.txt", i);
+			sprintf(f_temperature_name, "data/beer127_result/t_dependence/alpha_%f.txt", i);
 			FILE *f_temperature = fopen(f_temperature_name, "a");
 
 			srand((unsigned) time(&t));
@@ -341,7 +341,7 @@ void GetIterationDependence(time_t t_new, int *x, int *y, unsigned int iter) {
 		for(unsigned int i = 0; i < 1; ++i) {
 			step = steps_array[i];
 			char f_N_name[50];
-			sprintf(f_N_name, "data/bier127_result/N_dependence/N_%i.txt", step);
+			sprintf(f_N_name, "data/beer127_result/N_dependence/N_%i.txt", step);
 			FILE *f_N = fopen(f_N_name, "a");	
 			while(t_old == t_new) {
 				time(&t_new);
@@ -368,7 +368,7 @@ void GetTimeFromN(time_t t_new, int *x, int *y) {
 	time_t t_end = 0;
 	unsigned int steps_array[15] = {1, 10, 25, 50, 75, 100, 300, 500, 1000, 10000, 100000, 500000, 1000000, 2000000, 4000000};
 	double *distance = (double*) malloc(15 * sizeof(double));
-	FILE *f_N = fopen("data/bier127_result/N_dependence/time.txt", "a");	
+	FILE *f_N = fopen("data/beer127_result/N_dependence/time.txt", "a");	
 	for(unsigned int i = 0; i < 15; ++i) {
 		step = steps_array[i];
 		while(t_old == t_new) {
@@ -392,7 +392,7 @@ void GetTimeFromAlpha(time_t t_new, int *x, int *y) {
 	time_t t_end = 0;
 	double alpha_array[8] = {0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9};
 	double *distance = (double*) malloc(8 * sizeof(double));
-	FILE *f_N = fopen("data/bier127_result/t_dependence_all/time.txt", "a");	
+	FILE *f_N = fopen("data/beer127_result/t_dependence_all/time.txt", "a");	
 	for(unsigned int i = 0; i < 8; ++i) {
 		alpha = alpha_array[i];
 		while(t_old == t_new) {
@@ -415,7 +415,7 @@ int main() {
 	srand((unsigned) time(&t));
 	int x[127] = {0};	
 	int y[127] = {0};	
-	read_data(x, y, "data/bier127.tsp");
+	read_data(x, y, "data/beer127.tsp");
 	SA(x,y,127,0.8,1e5,1,0,40e5,0,1);
 	//GetTemperatureDependence(t, x, y, 0.9, 0.2, 0.1, 20000);
 	//GetIterationDependence(t, x, y, 464);
