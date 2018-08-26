@@ -1,14 +1,13 @@
 # Traveling salesman problem
 ## How to run the code
 **tsp.R** and **tsp.C** are files solving the traveling salesman problem. Choose the R code for understanding purpose, since comments are available. Further here, for illustration reasons, pictures are drawn automatically.
-The C-code is an equivalent implementation, to speed up the calculation. Here more advanced computations like the examination of the solution on different parameters can be done.
+The C-code is an equivalent implementation, to speed up the calculation. Here more advanced computations like the examination of the solution on different parameters can be done. Examples are implemented but no explenation is given.
 
 To run **tsp.R** the package ***combinat*** and ***scatterplot3d*** have to be installed. In R do **source("tsp.R")** to run the script. The data in file beer127.tsp is automatically loaded and saved as variables **x** and **y**. With this done following functions are now available:
 
 - **random(x,y)** - Chooses a random connection between all places and calculates the total distance to travel.
 - **brute(x,y)** - Finds the best connection using brute force. WARNING! This is not recommended on such a large data set. Only try this on data with corresponding to a few places.
 - **sa(x,y)** - Suggest a "best" connection using simulated annealing.
-- **sa_time(x,y)** - Same as sa(x,y), but now a additional time component is used to increase the complexity of the problem. 
 
 **beer127.mp4** shows a video of the actual algorithm, while finding the optimized path with respect to the distance. The final result can be seen in **beer.pdf**. In the following a rough explanation of the implementation is given. 
 
