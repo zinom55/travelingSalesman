@@ -1,4 +1,18 @@
 # Traveling salesman problem
+## How to run the code
+**tsp.R** and **tsp.C** are files solving the traveling salesman problem. Choose the R code for understanding purpose, since comments are available. Further here, for illustration reasons, pictures are drawn automatically.
+The C-code is an equivalent implementation, to speed up the calculation. More advanced computations like the examination of the solution on different parameters can be done.
+
+---
+To run **tsp.R** the package ***combinat*** and ***scatterplot3d*** have to be installed. In R do **source("tsp.R")** to run the script. The data in file bier127.tsp is automatically loaded and saved as variables **x** and **y**. With this done following functions are now available:
+
+- **random(x,y)** - Chooses a random connection between all places and calculates the total distance to travel.
+- **brute(x,y)** - Finds the best connection using brute force. WARNING! This is not recommended on such a large dataset. Only try this on data with a few places.
+- **sa(x,y)** - Suggest a "best" connection using simulated annealing.
+- **sa_time(x,y)** - Same as sa(x,y), but now a additional time component is used to increase the complexity of the problem. 
+
+**bier127.mp4** shows a video of the actual algorithm, while finding the optimized path with respect to the distance. The final result can be seen in **bier.pdf**. In the following a rough explanation of the implementation is given. 
+
 
 ## Project 
 The traveling salesman problem (TSP) is a long-standing and often discussed issue in computational physics and operations research: a traveling salesperson has to find the shortest closed tour between a certain set of cities, where each city is only visited once during the tour.
@@ -10,10 +24,8 @@ The following development of the algorithm is mostly inspired by a paper "Optimi
 The data which is used, can be found in the folder **data/** and consists out of 127 beer garden, distributed around Augsburg, Germany.
 
 --- 
-**bier127.mp4** shows a video of the actual algorithm, while finding the optimized path with respect to the distance. The final result can be seen in **bier.pdf**. In the following a rough explanation of the implementation is given. 
-
 ## Method
-### Simulated Annealing
+### Simulated annealing
 Simulated Annealing is a Monte-Carlo-method inspired by actual physics. It is used to find an approximate optimum of a function in solution space. The general idea is, to start off by setting the system, which one wishes to observe, to a well-chosen starting temperature ![](http://latex.codecogs.com/gif.latex?%24T_%5Ctext%7Bstart%7D%24.). The system should be in equilibrium state at the beginning of the observation. This can be assumed to be the case, if the starting temperature is large compared to the maximal possible energy-fluctuations of the system. The measure one uses to define the optimum, is the energy of the system. Therefore one wants to optimize (minimize or maximize) the function in accordance to the energy of the system, where the system mean energy ![](http://latex.codecogs.com/gif.latex?%24%5Cmathcal%7BH%7D%24) at temperature ![](http://latex.codecogs.com/gif.latex?%24T%24) can be calculated as: 
 
 ![](http://latex.codecogs.com/gif.latex?%5Cbar%7B%5Cmathcal%7BH%7D%7D%20%3D%20%5Cint%20%5Ctext%7Bd%7Dx%20%5C%3B%20%5Cmathcal%7BH%7D%28x%29%20%5C%3Be%5E%7B-%5Cfrac%7B%5Cmathcal%7BH%7D%20%28x%29%7D%7BT%7D%7D)
@@ -33,3 +45,5 @@ There are several ways of decreasing the temperature. This is crucial, since it 
 In the following analysis the way following way is chosen to lower the temperature:
 
 ![](http://latex.codecogs.com/gif.latex?%24T_%7Bj%7D%3D%5Calpha%5Ej%20T_%7B%5Ctext%7Bstart%7D%7D%24)
+
+## Implementation
