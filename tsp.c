@@ -1,4 +1,5 @@
-//Simulated annealing algorithm analog to the one in algorithms.R, but now in C to gain speed
+// Simulated annealing algorithm analog to the one in tsp.R, but now in C to gain speed
+// For comments, see tsp.R
 
 #include "stdio.h"
 #include "stdbool.h"
@@ -22,14 +23,14 @@ void read_data(int *x, int *y, const char *file) {
 
 double** allocate_matrix(unsigned int rows, unsigned int cols) {
 	double** M = (double**)malloc(rows * sizeof(double*));
-	for(int i = 0; i < rows; ++i) {
+	for(unsigned int i = 0; i < rows; ++i) {
 		M[i] = (double*)malloc(cols * sizeof(double));
 	}
 	return(M);
 }
 
 void free_matrix(double **M, unsigned int rows) {
-	for(int i = 0; i < rows; ++i) {
+	for(unsigned int i = 0; i < rows; ++i) {
 		free(M[i]);
 	}
 	free(M);
@@ -42,11 +43,11 @@ double** distance_matrix(int *x, int *y, unsigned int length_x) {
 	double distance = 0;
 	for(unsigned int i = 0; i < (length_x-1); ++i) {
 		for(unsigned int j = (i+1); j < length_x; ++j) {
-			city_1[1] = x[i];
-			city_1[2] = y[i];
-			city_2[1] = x[j];
-			city_2[2] = y[j];
-			distance = sqrt(pow((city_2[1]-city_1[1]),2) + pow((city_2[2]-city_1[2]),2));
+			city_1[0] = x[i];
+			city_1[1] = y[i];
+			city_2[0] = x[j];
+			city_2[1] = y[j];
+			distance = sqrt(pow((city_2[0]-city_1[0]),2) + pow((city_2[1]-city_1[1]),2));
 			M[i][j] = distance;
 			M[j][i] = distance;
 		}
@@ -75,7 +76,6 @@ unsigned int GetConnection(unsigned int i, unsigned int *idx, unsigned int lengt
 	while(j == i) {
 		j = (int)RandMtoN(0, length-1);
 	}
-	//printf("j = %i\n", j);
 	if(i > j) {
 		j_max = i;		
 		i_min = j;
@@ -167,7 +167,7 @@ double SA(int *x, int *y, unsigned int length, double alpha, unsigned int iter, 
 	double dis_c = CalcDistance(M, length, idx_c);
 	double dis_t = 0;
 	bool accept = 0;
-	int count_accept = 0, count_half = 0;
+	unsigned int count_accept = 0, count_half = 0;
 	unsigned int count_pictures = 0, t_steps = 0;
 	double mean = 0, mean_sq = 0, C = 0;
 	double mean_half = 0, mean_sq_half = 0, C_half = 0;
@@ -366,7 +366,7 @@ void GetTimeFromN(time_t t_new, int *x, int *y) {
 	unsigned int step = 0;
 	time_t t_old = 0;
 	time_t t_end = 0;
-	unsigned int steps_array[15] = {1, 10, 25, 50, 75, 1e2, 300, 500, 1e3, 1e4, 1e5, 5e5, 1e6, 2e6, 4e6};
+	unsigned int steps_array[15] = {1, 10, 25, 50, 75, 100, 300, 500, 1000, 10000, 100000, 500000, 1000000, 2000000, 4000000};
 	double *distance = (double*) malloc(15 * sizeof(double));
 	FILE *f_N = fopen("data/bier127_result/N_dependence/time.txt", "a");	
 	for(unsigned int i = 0; i < 15; ++i) {

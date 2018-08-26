@@ -1,25 +1,17 @@
-#########################################################################################################################################
-# Implemented algorithms for "solving" the TS problem:											#
-# 	1. Choose a random connection: random(x, y)											#
-#	2. Choose a connection with a brute force methode: brute(x, y)									#
-#	3. Simulated annealing: sa(x, y, T, alpha, N, t_end = 10e-4, option_save="no",option_PlotTemp = "no", option_mod = 500)		#
-#	4. Simulated annealing with a time component: sa_time <- function(x, y, temperature, alpha, N, t_end = 10e-4, time = 0, 	#
-#									  stretch_f = 1, area = array(0,dim=c(2,2)), option_save = "no",#
-#								          option_PlotTemp = "no", option_mod = 500))			#
-#########################################################################################################################################
-
 library(combinat); # To generate all possible connections of the distances "combinat" is needed
 library(scatterplot3d); # For plotting reason
 
 cat("Implemented algorithms for solving the TS problem:\n");
 cat("	1. Random connection (random(x, y))\n
 	2. Brute force methode (brute(x, y))\n	
-	3. Simulated annealing (sa(x, y, T, alpha, N, t_end = 10e-4, option_save = no,option_PlotTemp = no, option_mod = 500))\n
-	4. Simulated annealing with a time component (sa_time <- function(x, y, temperature, alpha, N, t_end = 10e-4, time = 0,	stretch_f = 1, area = array(0,dim=c(2,2)), option_save = no, option_PlotTemp = no, option_mod = 500))\n\n"
+	3. Simulated annealing (sa(x, y, alpha = 0.8, N = 100, t_end = 10e-4, option_save = no, option_PlotTemp = no, option_mod = 500))\n
+	4. Simulated annealing with a time component (sa_time <- function(x, y, alpha = 0.8, N = 100, t_end = 10e-4, time = 0,	stretch_f = 1, area = array(0,dim=c(2,2)), option_save = no, option_PlotTemp = no, option_mod = 500))\n\n"
 );
 
 # Load data
 data <- read.table("data/bier127.tsp");
+x <- data[,2]
+y <- data[,3]
 
 ####################################### Helper functions ############################################
 
@@ -221,7 +213,7 @@ random <- function(x, y) {
 	distance <- calc_distance(M, idx); # Calculate the distance of the chose connection
 	
 	# Plot and Print the calculated distance
-	plot_ts(x, y, idx, n, xlim = c(0,1000), ylim = c(0,1000));
+	plot_ts(x, y, idx, n, xlim = c(0,20000), ylim = c(0,20000));
 	cat("Distance: ", sum(distance), "\n");
 }
 
@@ -246,12 +238,12 @@ brute <- function(x, y) {
 	cat("City combination: ", optimal_conn, "\n");
 
 	# Plot 
-	plot_ts(x, y, optimal_conn, n, xlim = c(0,100), ylim = c(0,100));
+	plot_ts(x, y, optimal_conn, n, xlim = c(0,20000), ylim = c(0,20000));
 }
  
 
 # Simulated annealing methode to approximate global minimum of the TS problem
-sa <- function(x, y, temperature, alpha, N, t_end = 10e-4, option_save = "no", option_PlotTemp = "no", option_mod = 500) {
+sa <- function(x, y, alpha = 0.8, N = 100, t_end = 10e-4, option_save = "no", option_PlotTemp = "no", option_mod = 500) {
 	start_time <- proc.time();
 	n <- length(x);
 	M <- calc_distance_matrix(x, y); # Calcuate the matrix, containing the distances between all points
@@ -270,10 +262,9 @@ sa <- function(x, y, temperature, alpha, N, t_end = 10e-4, option_save = "no", o
 	# Set current values to starting values
 	idx_c <- idx_s;  
 	dis_c <- dis_s;
-	# If temperature == 0 is chosen, the starting temperature will be calculated by T=10*max{DeltaH}, with a random walk
-	if(temperature == 0) {
-		temperature = start_temperature(idx_c, dis_s, n, M, N);	
-	}
+	
+	# The starting temperature will be calculated by T=10*max{DeltaH}, using a random walk
+	temperature = start_temperature(idx_c, dis_s, n, M, N);	
 
 	# Exit condition is some low temperature.
 	while(temperature >= t_end) {
@@ -358,7 +349,7 @@ sa <- function(x, y, temperature, alpha, N, t_end = 10e-4, option_save = "no", o
 }
 
 # Simulated annealing methode to approximate global minimum of the TS problem plus time component. It will be assumed that the overall time is 24h and that after time "time" the distance to travel takes the factor "stretch_f" longer.
-sa_time <- function(x, y, temperature, alpha, N, t_end = 10e-4, time = 0, stretch_f = 1, area = array(0,dim=c(2,2)), option_save = "no", option_PlotTemp = "no", option_mod = 500) {
+sa_time <- function(x, y, alpha = 0.8, N = 100, t_end = 10e-4, time = 0, stretch_f = 1, area = array(0,dim=c(2,2)), option_save = "no", option_PlotTemp = "no", option_mod = 500) {
 	n <- length(x);
 	solution <- 118293.52;
 	time <- time * solution / 24;
