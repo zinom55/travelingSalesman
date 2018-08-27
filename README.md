@@ -1,7 +1,7 @@
 # Traveling salesman problem
 ## How to run the code
 **tsp.R** and **tsp.C** are files solving the traveling salesman problem. Choose the R code for understanding purpose, since comments are available. Further here, for illustration reasons, pictures are drawn automatically.
-The C-code is an equivalent implementation, to speed up the calculation. Here more advanced computations like the examination of the solution on different parameters can be done. Examples are implemented but no explenation is given.
+The C-code is an equivalent implementation, to speed up the calculation. Here more advanced computations like the examination of the solution on different parameters can be done. Examples are implemented but no explanation is given.
 
 To run **tsp.R** the package ***combinat*** and ***scatterplot3d*** have to be installed. In R do **source("tsp.R")** to run the script. The data in file beer127.tsp is automatically loaded and saved as variables **x** and **y**. With this done following functions are now available:
 
@@ -11,17 +11,16 @@ To run **tsp.R** the package ***combinat*** and ***scatterplot3d*** have to be i
 
 **beer127.mp4** shows a video of the actual algorithm, while finding the optimized path with respect to the distance. The final result can be seen in **beer.pdf**. In the following a rough explanation of the implementation is given. 
 
-
+---
 ## Project 
 The traveling salesman problem (TSP) is a long-standing and often discussed issue in computational physics and operations research: a traveling salesperson has to find the shortest closed tour between a certain set of cities, where each city is only visited once during the tour.
 
-Naturally, this problem has applications in many every-day problems, e.g. in finding directions using a route guiding system. Optimizations can be achieved with respect to different funcitons, e.g. the shortest path, the quickest path, and others.
+Naturally, this problem has applications in many every-day problems, e.g. in finding directions using a route guiding system. Optimizations can be achieved with respect to different functions, e.g. the shortest path, the quickest path, and others.
 
 The following development of the algorithm is mostly inspired by a paper "Optimization of the time-dependent traveling salesman problem with Monte Carlo method" by Johannes Bentner et al. (**paper.pdf**).
 
 The data which is used, can be found in the folder **data/** and consists out of 127 beer garden, distributed around Augsburg, Germany.
 
---- 
 ## Method
 ### Simulated annealing
 Simulated Annealing is a Monte-Carlo-method inspired by actual physics. It is used to find an approximate optimum of a function in solution space. The general idea is, to start off by setting the system, which one wishes to observe, to a well-chosen starting temperature ![](http://latex.codecogs.com/gif.latex?%24T_%5Ctext%7Bstart%7D%24.). The system should be in equilibrium state at the beginning of the observation. This can be assumed to be the case, if the starting temperature is large compared to the maximal possible energy-fluctuations of the system. The measure one uses to define the optimum, is the energy of the system. Therefore one wants to optimize (minimize or maximize) the function in accordance to the energy of the system, where the system mean energy ![](http://latex.codecogs.com/gif.latex?%24%5Cmathcal%7BH%7D%24) at temperature ![](http://latex.codecogs.com/gif.latex?%24T%24) can be calculated as: 
@@ -45,3 +44,11 @@ In the following analysis the way following way is chosen to lower the temperatu
 ![](http://latex.codecogs.com/gif.latex?%24T_%7Bj%7D%3D%5Calpha%5Ej%20T_%7B%5Ctext%7Bstart%7D%7D%24)
 
 ## Implementation
+The implementation of the algorithm can be divided into several steps:
+
+1. Calculation of a square matrix, containing the distances between all points. This matrix is used to calculate the total distance of each suggested state (connection), without to calculate the distance between the places all over again. Since the matrix is symmetric only a upper- or lower triangular matrix is needed.
+2. Start off with a random connection (a random permutation of all places), and with this a random total distance to travel.
+3. Before applying the simulated annealing algorithm, a start temperature has to be found. For this a random walk in solution space is performed or in other words every step of a newly randomly suggested connection is accepted. A value proportional to the maximal energy difference between these steps is taking a good value for the starting temperature.
+4. The simulated annealing algorithm as explained above is applied. 
+5. To stop the algorithm a minimal temperature is needed as a threshold. This can be chosen by hand, or better by testing on convergence. This can be done, for example by looking at the value of accepted reactions each temperature step.
+5. Print and visualize the result.
