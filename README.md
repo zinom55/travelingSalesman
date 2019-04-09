@@ -1,6 +1,7 @@
 # Traveling salesman problem
 ## How to run the code
-**tsp.R** and **tsp.C** are files solving the traveling salesman problem. Choose **tsp.R** for understanding purpose, since comments are available. Further in the R-code, for illustration reasons, pictures are drawn automatically.
+[tsp.R](tsp.R) and 
+[tsp.C](tsp.C) are files solving the traveling salesman problem. Choose **tsp.R** for understanding purpose, since comments are available. Further in the R-code, for illustration reasons, pictures are drawn automatically.
 
 The C-code is an equivalent implementation, to speed up the calculation. Here, more advanced computations like the examination of the solution on different parameters can be performed. Examples are implemented but no explanation is given.
 
@@ -18,7 +19,8 @@ The traveling salesman problem (TSP) is a long-standing and often discussed issu
 
 Naturally, this problem has applications in many every-day problems, e.g. in finding directions using a route guiding system. Optimizations can be achieved with respect to different functions, e.g. the shortest path, the quickest path, and others.
 
-The following development of the algorithm is mostly inspired by a paper "Optimization of the time-dependent traveling salesman problem with Monte Carlo method" by Johannes Bentner et al. (**paper.pdf**).
+The following development of the algorithm is mostly inspired by a paper "Optimization of the time-dependent traveling salesman problem with Monte Carlo method" by Johannes Bentner et al. (
+[paper.pdf](paper.pdf)).
 
 The data which is used, can be found in the folder **data/** and consists out of 127 beer garden, distributed around Augsburg, Germany.
 
