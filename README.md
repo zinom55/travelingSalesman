@@ -1,7 +1,7 @@
 # Traveling salesman problem
 ## How to run the code
 [tsp.R](tsp.R) and
-[tsp.C](tsp.C) are files solving the traveling salesman problem. Choose **tsp.R** for understanding purpose, since comments are available. Further in the R-code, for illustration reasons, pictures are drawn automatically.
+[tsp.C](tsp.c) are files solving the traveling salesman problem. Choose **tsp.R** for understanding purpose, since comments are available. Further in the R-code, for illustration reasons, pictures are drawn automatically.
 
 The C-code is an equivalent implementation, to speed up the calculation. Here, more advanced computations like the examination of the solution on different parameters can be performed. Examples are implemented but no explanation is given.
 
