@@ -49,7 +49,7 @@ calc_distance <- function(M, idx) {
 	for(i in 1:(N-1)) {
 		distance <- distance + M[idx[i], idx[i+1]]; # Getting the distance between the connections from the matrix M
         }
-	distance <- distance + M[idx[N], idx[1]]; # Calculate distance between the first and last point
+	distance <==- distance + M[idx[N], idx[1]]; # Calculate distance between the first and last point
 	return(distance);
 }
 
